@@ -13,7 +13,32 @@ pip install -r requirements.txt
 
 ## База данных
 
-Нужен PostgreSQL. По умолчанию подключается к `postgres:postgres@localhost/my_postgres_db`.
+### Вариант 1: Docker Compose (рекомендуется)
+
+Запусти PostgreSQL в контейнере:
+```bash
+cd LR3
+docker-compose up -d
+```
+
+База данных будет доступна на `localhost:5432` с параметрами:
+- Пользователь: `postgres`
+- Пароль: `postgres`
+- База данных: `my_postgres_db`
+
+Остановить контейнер:
+```bash
+docker-compose down
+```
+
+Остановить и удалить данные:
+```bash
+docker-compose down -v
+```
+
+### Вариант 2: Локальный PostgreSQL
+
+По умолчанию подключается к `postgres:postgres@localhost/my_postgres_db`.
 
 Если базы нет, создай:
 ```bash
@@ -80,4 +105,8 @@ curl -X DELETE http://127.0.0.1:8000/users/1
 uvicorn LR3.app.main:app --reload --port 8001
 ```
 
-**Не подключается к БД** - проверь что PostgreSQL запущен и база существует
+**Не подключается к БД** - проверь что PostgreSQL запущен и база существует. Если используешь Docker:
+```bash
+docker-compose ps  # проверить статус контейнера
+docker-compose logs postgres  # посмотреть логи
+```
