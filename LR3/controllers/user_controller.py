@@ -36,5 +36,5 @@ class UserController(Controller):
     @delete("/{user_id:int}")
     async def delete_user(self, user_service: UserService, user_id: int = Parameter(gt=0)) -> None:
         deleted = await user_service.delete(user_id)
-        if deleted is None:
+        if not deleted:
             raise NotFoundException(detail=f"User with ID {user_id} not found")

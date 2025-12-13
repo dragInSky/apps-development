@@ -1,6 +1,6 @@
 from litestar import Litestar
 from litestar.di import Provide
-from LR3.app.dependencies import provide_user_service, provide_user_repository, provide_db_session
+from LR3.app.dependencies import provide_user_service, provide_user_repository, provide_db_session, init_db
 from LR3.controllers.user_controller import UserController
 
 app = Litestar(
@@ -10,6 +10,7 @@ app = Litestar(
         "user_repository": Provide(provide_user_repository),
         "user_service": Provide(provide_user_service),
     },
+    on_startup=[init_db],
 )
 
 if __name__ == "__main__":

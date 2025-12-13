@@ -1,112 +1,61 @@
-# LR3 - REST API с Dependency Injection
+# LR3 — REST API с DI
 
-Простое API для работы с пользователями. Используется Litestar, SQLAlchemy и PostgreSQL.
+Минимальное API на Litestar, SQLAlchemy и PostgreSQL для CRUD над пользователями.
 
-## Установка
+## Подготовка
 
 ```bash
 cd LR3
-python -m venv venv
-source venv/bin/activate  # на Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
+cd ..
 ```
 
 ## База данных
 
-### Вариант 1: Docker Compose (рекомендуется)
+Запусти PostgreSQL в Docker (рекомендуется):
 
-Запусти PostgreSQL в контейнере:
 ```bash
-cd LR3
 docker-compose up -d
 ```
 
-База данных будет доступна на `localhost:5432` с параметрами:
-- Пользователь: `postgres`
-- Пароль: `postgres`
-- База данных: `my_postgres_db`
+Параметры подключения: `postgres/postgres@localhost:5432/my_postgres_db`.
 
-Остановить контейнер:
+Для локального PostgreSQL:
+
 ```bash
-docker-compose down
+PGPASSWORD=postgres createdb -h localhost -U postgres my_postgres_db
+export DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost/my_postgres_db
 ```
 
-Остановить и удалить данные:
+## Запуск приложения
+
 ```bash
-docker-compose down -v
+cd LR3
+export PYTHONPATH=$(pwd)/..
+../LR3/venv/bin/uvicorn --app-dir .. LR3.app.main:app --reload --port 8000
 ```
 
-### Вариант 2: Локальный PostgreSQL
-
-По умолчанию подключается к `postgres:postgres@localhost/my_postgres_db`.
-
-Если базы нет, создай:
-```bash
-createdb -U postgres my_postgres_db
-```
-
-Таблицы создаются автоматически при первом запуске.
-
-## Запуск
-
-**Важно:** запускай из папки `apps-development`, не из `LR3`!
+## Примеры запросов
 
 ```bash
-cd /path/to/apps-development
-source LR3/venv/bin/activate
-uvicorn LR3.app.main:app --reload --port 8000
-```
+BASE=http://127.0.0.1:8000
+EMAIL="user$(date +%s)@example.com"
 
-Или без активации venv:
-```bash
-cd /path/to/apps-development
-LR3/venv/bin/python -m uvicorn LR3.app.main:app --reload --port 8000
-```
+ID=$(
+  curl -s -X POST "$BASE/users" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"$EMAIL\",\"full_name\":\"John Doe\"}" \
+  | python3 -c "import sys, json; print(json.load(sys.stdin)['id'])"
+)
 
-Сервер будет на `http://127.0.0.1:8000`
+curl "$BASE/users"
+curl "$BASE/users/$ID"
 
-## API
-
-Создать пользователя:
-```bash
-curl -X POST "http://127.0.0.1:8000/users" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","full_name":"John Doe"}'
-```
-
-Получить всех:
-```bash
-curl http://127.0.0.1:8000/users
-```
-
-Получить по ID:
-```bash
-curl http://127.0.0.1:8000/users/1
-```
-
-Обновить:
-```bash
-curl -X PUT "http://127.0.0.1:8000/users/1" \
+curl -X PUT "$BASE/users/$ID" \
   -H "Content-Type: application/json" \
   -d '{"full_name":"Jane Doe"}'
-```
 
-Удалить:
-```bash
-curl -X DELETE http://127.0.0.1:8000/users/1
-```
-
-## Проблемы
-
-**"ModuleNotFoundError: No module named 'LR3'"** - запускай из `apps-development`, не из `LR3`
-
-**"Address already in use"** - порт занят, используй другой:
-```bash
-uvicorn LR3.app.main:app --reload --port 8001
-```
-
-**Не подключается к БД** - проверь что PostgreSQL запущен и база существует. Если используешь Docker:
-```bash
-docker-compose ps  # проверить статус контейнера
-docker-compose logs postgres  # посмотреть логи
+curl -X DELETE "$BASE/users/$ID"
 ```

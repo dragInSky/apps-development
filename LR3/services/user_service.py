@@ -1,4 +1,3 @@
-from typing import List
 from LR3.app.schemas import UserCreate, UserUpdate
 from LR3.repositories.user_repository import UserRepository
 

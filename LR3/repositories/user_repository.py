@@ -32,9 +32,10 @@ class UserRepository:
         await self.session.refresh(user)
         return user
 
-    async def delete(self, user_id: int):
+    async def delete(self, user_id: int) -> bool:
         user = await self.session.get(User, user_id)
         if not user:
-            return None
+            return False
         await self.session.delete(user)
         await self.session.commit()
+        return True
