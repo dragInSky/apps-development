@@ -45,7 +45,12 @@ docker-compose down -v
 createdb -U postgres my_postgres_db
 ```
 
-Таблицы создаются автоматически при первом запуске.
+Если используешь собственные параметры подключения, задай `DATABASE_URL`:
+```bash
+export DATABASE_URL=postgresql+asyncpg://<user>:<password>@<host>/<db_name>
+```
+
+Таблицы создаются автоматически при первом запуске приложения (при старте Litestar). Убедись, что у пользователя БД есть права на создание таблиц.
 
 ## Запуск
 
@@ -56,6 +61,8 @@ cd /path/to/apps-development
 source LR3/venv/bin/activate
 uvicorn LR3.app.main:app --reload --port 8000
 ```
+
+На первом запуске в логах будет видно создание таблиц (SQL `CREATE TABLE ...`). Если используешь Docker Compose, убедись, что контейнер PostgreSQL уже поднялся перед запуском `uvicorn`.
 
 Или без активации venv:
 ```bash
