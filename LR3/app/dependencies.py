@@ -12,7 +12,9 @@ from LR3.services.order_service import OrderService
 from LR3.services.product_service import ProductService
 from LR3.services.user_service import UserService
 
-DATABASE_URL = os.getenv("DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost/my_postgres_db")
+DATABASE_URL = os.getenv(
+    "DATABASE_URL", "postgresql+asyncpg://postgres:postgres@localhost/my_postgres_db"
+)
 
 
 def make_engine(url: Optional[str] = None):
@@ -20,14 +22,18 @@ def make_engine(url: Optional[str] = None):
 
 
 engine = make_engine()
-async_session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+async_session_factory = sessionmaker(
+    engine, class_=AsyncSession, expire_on_commit=False
+)
 
 
 def configure_engine(new_url: Optional[str] = None) -> None:
     """Recreate engine and session factory (useful for tests)."""
     global engine, async_session_factory
     engine = make_engine(new_url)
-    async_session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    async_session_factory = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
 
 
 async def provide_db_session() -> AsyncSession:
@@ -56,7 +62,9 @@ async def provide_user_service(user_repository: UserRepository) -> UserService:
     return UserService(user_repository)
 
 
-async def provide_product_service(product_repository: ProductRepository) -> ProductService:
+async def provide_product_service(
+    product_repository: ProductRepository,
+) -> ProductService:
     return ProductService(product_repository)
 
 

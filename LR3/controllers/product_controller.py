@@ -13,7 +13,9 @@ class ProductController(Controller):
     path = "/products"
 
     @get()
-    async def list_products(self, product_service: ProductService) -> List[ProductResponse]:
+    async def list_products(
+        self, product_service: ProductService
+    ) -> List[ProductResponse]:
         products = await product_service.get_all()
         return [ProductResponse.model_validate(p) for p in products]
 
@@ -29,7 +31,9 @@ class ProductController(Controller):
         return ProductResponse.model_validate(product)
 
     @post(status_code=HTTP_201_CREATED)
-    async def create_product(self, product_service: ProductService, data: ProductCreate) -> ProductResponse:
+    async def create_product(
+        self, product_service: ProductService, data: ProductCreate
+    ) -> ProductResponse:
         product = await product_service.create(data)
         return ProductResponse.model_validate(product)
 

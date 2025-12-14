@@ -29,7 +29,9 @@ class OrderController(Controller):
         return OrderResponse.model_validate(order)
 
     @post(status_code=HTTP_201_CREATED)
-    async def create_order(self, order_service: OrderService, data: OrderCreate) -> OrderResponse:
+    async def create_order(
+        self, order_service: OrderService, data: OrderCreate
+    ) -> OrderResponse:
         order = await order_service.create_order(data)
         return OrderResponse.model_validate(order)
 
@@ -46,7 +48,9 @@ class OrderController(Controller):
         return OrderResponse.model_validate(order)
 
     @delete("/{order_id:int}")
-    async def delete_order(self, order_service: OrderService, order_id: int = Parameter(gt=0)) -> None:
+    async def delete_order(
+        self, order_service: OrderService, order_id: int = Parameter(gt=0)
+    ) -> None:
         deleted = await order_service.delete(order_id)
         if not deleted:
             raise NotFoundException(f"Order with ID {order_id} not found")

@@ -36,7 +36,9 @@ async def tables(engine):
 
 @pytest.fixture
 async def session(engine, tables) -> AsyncSession:
-    test_session_factory = sessionmaker(engine, class_=AsyncSession, expire_on_commit=False)
+    test_session_factory = sessionmaker(
+        engine, class_=AsyncSession, expire_on_commit=False
+    )
     async with test_session_factory() as db_session:
         yield db_session
 

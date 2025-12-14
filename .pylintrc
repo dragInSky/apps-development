@@ -1,0 +1,35 @@
+[BASIC]
+init-hook='import sys; sys.path.append(".")'
+module-rgx=(([a-z_][a-z0-9_]*)|(LR[0-9]+))$
+disable =
+    missing-function-docstring,
+    missing-module-docstring,
+    missing-class-docstring,
+    too-few-public-methods,
+    global-statement,
+    not-callable,
+    attribute-defined-outside-init,
+    ungrouped-imports,
+    wrong-import-order,
+    duplicate-code,
+    unused-import,
+    too-many-arguments,
+    unused-argument,
+    too-many-positional-arguments,
+    import-outside-toplevel,
+    too-many-instance-attributes,
+ignore-paths =
+    deploy,
+    temp,
+    build,
+    tests,
+    LR3/venv,
+    LR4/venv,
+    LR4/tests,
+    LR4/htmlcov,
+    LR5/venv,
+extension-pkg-whitelist =
+    pydantic,
+    orjson,
+generated-members =
+    [pydantic.PostgresDsn.build]

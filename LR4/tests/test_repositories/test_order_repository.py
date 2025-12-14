@@ -19,8 +19,12 @@ class TestOrderRepository:
             first_name="Artem",
             last_name="Rudenko",
         )
-        product1 = await product_repository.create(name="USB Cable", price=5.5, stock_quantity=5)
-        product2 = await product_repository.create(name="Power Bank", price=30.0, stock_quantity=10)
+        product1 = await product_repository.create(
+            name="USB Cable", price=5.5, stock_quantity=5
+        )
+        product2 = await product_repository.create(
+            name="Power Bank", price=30.0, stock_quantity=10
+        )
 
         total = product1.price * 2 + product2.price * 3
         order = await order_repository.create(
@@ -50,7 +54,9 @@ class TestOrderRepository:
             first_name="Mikhail",
             last_name="Status",
         )
-        product = await product_repository.create(name="Cable", price=10.0, stock_quantity=5)
+        product = await product_repository.create(
+            name="Cable", price=10.0, stock_quantity=5
+        )
 
         order = await order_repository.create(
             user_id=user.id,
@@ -78,7 +84,9 @@ class TestOrderRepository:
             first_name="Pavel",
             last_name="Smirnov",
         )
-        product = await product_repository.create(name="Cable", price=10.0, stock_quantity=5)
+        product = await product_repository.create(
+            name="Cable", price=10.0, stock_quantity=5
+        )
 
         order = await order_repository.create(
             user_id=user.id,

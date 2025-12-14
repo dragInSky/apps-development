@@ -18,24 +18,25 @@ class OrderRepository:
 
     async def get_by_id(self, order_id: int) -> Optional[Order]:
         stmt = (
-            select(Order)
-            .options(selectinload(Order.items))
-            .where(Order.id == order_id)
+            select(Order).options(selectinload(Order.items)).where(Order.id == order_id)
         )
         result = await self.session.execute(stmt)
         return result.scalars().unique().one_or_none()
 
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[Order]:
         stmt = (
-            select(Order)
-            .options(selectinload(Order.items))
-            .limit(limit)
-            .offset(offset)
+            select(Order).options(selectinload(Order.items)).limit(limit).offset(offset)
         )
         result = await self.session.execute(stmt)
         return result.scalars().unique().all()
 
-    async def create(self, user_id: int, items: List[dict], total_amount: float, status: str = "pending") -> Order:
+    async def create(
+        self,
+        user_id: int,
+        items: List[dict],
+        total_amount: float,
+        status: str = "pending",
+    ) -> Order:
         order = Order(user_id=user_id, total_amount=total_amount, status=status)
         for item in items:
             order.items.append(

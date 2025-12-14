@@ -46,7 +46,11 @@ class OrderService:
 
             products_for_update.append((product, item.quantity))
             items_payload.append(
-                {"product_id": product.id, "quantity": item.quantity, "price": product.price}
+                {
+                    "product_id": product.id,
+                    "quantity": item.quantity,
+                    "price": product.price,
+                }
             )
             total_amount += product.price * item.quantity
 

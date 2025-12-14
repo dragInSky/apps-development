@@ -1,0 +1,27 @@
+[tool.isort]
+profile = "black"
+known_first_party = ["LR3"]
+skip = ["LR3/venv", "LR4/venv", "LR5/venv", "venv", ".venv", "htmlcov", ".pytest_cache"]
+
+[tool.black]
+line-length = 88
+target-version = ['py313']
+exclude = '''
+/(
+  \.git
+  | \.hg
+  | \.mypy_cache
+  | \.tox
+  | \.venv
+  | venv
+  | LR3/venv
+  | LR4/venv
+  | LR4/htmlcov
+  | __pycache__
+  | build
+  | dist
+  | docker
+  | config
+  | temp
+)/
+'''
