@@ -11,3 +11,4 @@ wheels/
 
 # IDEs
 .idea/
+.DS_Store

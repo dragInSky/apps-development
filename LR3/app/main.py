@@ -3,11 +3,13 @@ from litestar.di import Provide
 
 from LR3.app.dependencies import (
     init_db,
+    provide_cache,
     provide_db_session,
     provide_order_repository,
     provide_order_service,
     provide_product_repository,
     provide_product_service,
+    provide_redis,
     provide_user_repository,
     provide_user_service,
 )
@@ -21,6 +23,8 @@ def create_app() -> Litestar:
         route_handlers=[UserController, ProductController, OrderController],
         dependencies={
             "db_session": Provide(provide_db_session),
+            "redis_client": Provide(provide_redis),
+            "cache": Provide(provide_cache),
             "user_repository": Provide(provide_user_repository),
             "product_repository": Provide(provide_product_repository),
             "order_repository": Provide(provide_order_repository),

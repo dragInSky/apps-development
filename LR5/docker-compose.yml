@@ -12,6 +12,14 @@ services:
     volumes:
       - rabbitmq_data:/data
 
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
   db:
     image: postgres:16-alpine
     container_name: lr5_postgres
@@ -41,10 +49,13 @@ services:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
       HOST: 0.0.0.0
       PORT: 8000
     depends_on:
       - rabbitmq
+      - redis
       - db
     ports:
       - "8000:8000"
@@ -61,11 +72,15 @@ services:
       RABBITMQ_HOST: rabbitmq
       RABBITMQ_PORT: 5672
       RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
     depends_on:
       - rabbitmq
+      - redis
       - db
     command: ["python", "-m", "LR6.worker"]
 
 volumes:
   postgres_data:
   rabbitmq_data:
+  redis-data:

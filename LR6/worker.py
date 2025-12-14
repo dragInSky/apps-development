@@ -7,8 +7,15 @@ import os
 from faststream import FastStream
 from faststream.rabbit import RabbitBroker
 
-from LR3.app.dependencies import async_session_factory, configure_engine, init_db
+from LR3.app.cache import PRODUCT_CACHE_TTL_SECONDS, RedisCache
+from LR3.app.dependencies import (
+    async_session_factory,
+    configure_engine,
+    get_redis_client,
+    init_db,
+)
 from LR3.app.schemas import OrderUpdate, ProductUpdate
+from LR3.app.schemas import ProductResponse
 from LR3.repositories.order_repository import OrderRepository
 from LR3.repositories.product_repository import ProductRepository
 from LR3.repositories.user_repository import UserRepository
@@ -32,6 +39,14 @@ broker = RabbitBroker(
     os.getenv("RABBITMQ_URL", "amqp://guest:guest@localhost:5672/local")
 )
 app = FastStream(broker)
+cache = RedisCache(get_redis_client())
+
+
+async def cache_product(product) -> None:
+    response = ProductResponse.model_validate(product)
+    await cache.set_model(
+        f"product:{response.id}", response, PRODUCT_CACHE_TTL_SECONDS
+    )
 
 
 @broker.subscriber("product")
@@ -42,6 +57,7 @@ async def subscribe_product(message: ProductMessage) -> None:
         if isinstance(message, ProductCreateMessage):
             product = await product_service.create(message.product)
             logger.info("product:create id=%s name=%s", product.id, product.name)
+            await cache_product(product)
             return
 
         if isinstance(message, ProductUpdateMessage):
@@ -52,6 +68,7 @@ async def subscribe_product(message: ProductMessage) -> None:
                 )
                 return
             logger.info("product:update id=%s name=%s", product.id, product.name)
+            await cache_product(product)
             return
 
         if isinstance(message, ProductOutOfStockMessage):
@@ -64,6 +81,7 @@ async def subscribe_product(message: ProductMessage) -> None:
                 )
                 return
             logger.info("product:out_of_stock id=%s name=%s", product.id, product.name)
+            await cache_product(product)
             return
 
         raise RuntimeError(f"Unsupported product message: {type(message)!r}")
