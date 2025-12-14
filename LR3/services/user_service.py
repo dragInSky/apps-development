@@ -9,14 +9,18 @@ class UserService:
     async def get_by_id(self, user_id: int):
         return await self.user_repository.get_by_id(user_id)
 
-    async def get_by_filter(self, count: int, page: int, **kwargs):
-        return await self.user_repository.get_by_filter(count, page, **kwargs)
+    async def get_by_email(self, email: str):
+        return await self.user_repository.get_by_email(email)
+
+    async def get_all(self, limit: int = 100, offset: int = 0):
+        return await self.user_repository.get_all(limit, offset)
 
     async def create(self, user_data: UserCreate):
-        return await self.user_repository.create(user_data)
+        return await self.user_repository.create(**user_data.model_dump())
 
     async def update(self, user_id: int, user_data: UserUpdate):
-        return await self.user_repository.update(user_id, user_data)
+        payload = user_data.model_dump(exclude_none=True)
+        return await self.user_repository.update(user_id, **payload)
 
-    async def delete(self, user_id: int):
+    async def delete(self, user_id: int) -> bool:
         return await self.user_repository.delete(user_id)
