@@ -3,10 +3,18 @@ set -euo pipefail
 
 DB_HOST="${DB_HOST:-db}"
 DB_PORT="${DB_PORT:-5432}"
+RABBITMQ_HOST="${RABBITMQ_HOST:-}"
+RABBITMQ_PORT="${RABBITMQ_PORT:-5672}"
 
 while ! nc -z "$DB_HOST" "$DB_PORT"; do
   sleep 0.1
 done
+
+if [[ -n "$RABBITMQ_HOST" ]]; then
+  while ! nc -z "$RABBITMQ_HOST" "$RABBITMQ_PORT"; do
+    sleep 0.1
+  done
+fi
 
 python - <<'PY'
 import asyncio

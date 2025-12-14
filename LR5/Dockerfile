@@ -14,6 +14,7 @@ COPY LR3/requirements.txt ./requirements.txt
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY LR3 ./LR3
+COPY LR6 ./LR6
 COPY LR5/entrypoint.sh ./entrypoint.sh
 RUN chmod +x entrypoint.sh
 

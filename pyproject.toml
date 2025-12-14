@@ -1,6 +1,6 @@
 [tool.isort]
 profile = "black"
-known_first_party = ["LR3"]
+known_first_party = ["LR3", "LR6"]
 skip = ["LR3/venv", "LR4/venv", "LR5/venv", "venv", ".venv", "htmlcov", ".pytest_cache"]
 
 [tool.black]

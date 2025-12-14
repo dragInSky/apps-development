@@ -1,60 +1,33 @@
 # LR6 — RabbitMQ (FastStream) + Litestar
 
-Цель: добавить брокер сообщений RabbitMQ и обработку очередей `product` и `order` в проект из ЛР5 (Litestar + Postgres).
-
-## Что добавлено
-- RabbitMQ (`rabbitmq:3-management`) + UI: `http://localhost:15672` (логин/пароль `guest/guest`)
-- Worker на `faststream[rabbit]`, который:
-  - принимает продукцию (`product`: создать/обновить/пометить как `out_of_stock`)
-  - принимает заказы (`order`: создать/обновить статус)
-  - отклоняет заказы, если товара нет / не хватает на складе (см. логи `worker`)
-- Получение списка/конкретной продукции и заказов — через Litestar API:
-  - `GET /products`, `GET /products/{id}`
-  - `GET /orders`, `GET /orders/{id}`
-
-## Запуск через Docker Compose (ЛР5)
-Из корня репозитория:
+## Как запустить
+Поднять сервисы:
 ```bash
-docker compose -f LR5/docker-compose.yml up --build
+cd ..
+docker compose -f LR5/docker-compose.yml up -d --build
 ```
 
-## Проверка очередей
-Worker слушает очереди:
-- `product`
-- `order`
-
-## Скрипт-продюсер (5 продукций + 3 заказа)
-С хоста (локально), при запущенном compose:
+Подождать, пока API поднимется на `http://localhost:8000` (если команда падает — просто повторить через несколько секунд):
 ```bash
-python -m LR6.producer
+cd ..
+curl -f http://localhost:8000/users
 ```
 
-По умолчанию скрипт использует:
-- API: `http://localhost:8000` (можно переопределить `API_BASE_URL`)
-- RabbitMQ: `localhost:5672`, vhost `local` (можно переопределить `RABBITMQ_HOST`, `RABBITMQ_PORT`, `RABBITMQ_VHOST`)
+Отправить тестовые данные (создаст 5 продукций и 3 заказа):
+```bash
+cd ..
+python3 -m venv .venv
+.venv/bin/python -m pip install --upgrade pip
+.venv/bin/python -m pip install -r LR3/requirements.txt
+PYTHONPATH=$(pwd) .venv/bin/python -m LR6.producer
+```
 
-## Формат сообщений
-Очередь `product`:
-- создать:
-  ```json
-  {"action":"create","product":{"name":"Laptop","price":1200.0,"stock_quantity":5,"description":"..." }}
-  ```
-- обновить:
-  ```json
-  {"action":"update","product_id":1,"product":{"price":999.0,"stock_quantity":10}}
-  ```
-- пометить как закончившийся:
-  ```json
-  {"action":"out_of_stock","product_id":1}
-  ```
+Проверить результат:
+```bash
+cd ..
+curl http://localhost:8000/products
+curl http://localhost:8000/orders
+docker logs -n 200 lr6_worker
+```
 
-Очередь `order`:
-- создать:
-  ```json
-  {"action":"create","order":{"user_id":1,"items":[{"product_id":1,"quantity":2}]}}
-  ```
-- обновить статус:
-  ```json
-  {"action":"update_status","order_id":1,"status":"paid"}
-  ```
-
+UI RabbitMQ: `http://localhost:15672` (логин - guest, пароль - guest).

@@ -1,6 +1,17 @@
 version: '3.8'
 
 services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: lr6_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_VHOST=local
+    volumes:
+      - rabbitmq_data:/data
+
   db:
     image: postgres:16-alpine
     container_name: lr5_postgres
@@ -27,12 +38,34 @@ services:
       DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/my_postgres_db
       DB_HOST: db
       DB_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
       HOST: 0.0.0.0
       PORT: 8000
     depends_on:
+      - rabbitmq
       - db
     ports:
       - "8000:8000"
 
+  worker:
+    build:
+      context: ..
+      dockerfile: LR5/Dockerfile
+    container_name: lr6_worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/my_postgres_db
+      DB_HOST: db
+      DB_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+    depends_on:
+      - rabbitmq
+      - db
+    command: ["python", "-m", "LR6.worker"]
+
 volumes:
   postgres_data:
+  rabbitmq_data:
