@@ -10,17 +10,25 @@ from LR3.app.dependencies import (
     provide_product_repository,
     provide_product_service,
     provide_redis,
+    provide_report_repository,
+    provide_report_service,
     provide_user_repository,
     provide_user_service,
 )
 from LR3.controllers.order_controller import OrderController
 from LR3.controllers.product_controller import ProductController
+from LR3.controllers.report_controller import ReportController
 from LR3.controllers.user_controller import UserController
 
 
 def create_app() -> Litestar:
     return Litestar(
-        route_handlers=[UserController, ProductController, OrderController],
+        route_handlers=[
+            UserController,
+            ProductController,
+            OrderController,
+            ReportController,
+        ],
         dependencies={
             "db_session": Provide(provide_db_session),
             "redis_client": Provide(provide_redis),
@@ -28,9 +36,11 @@ def create_app() -> Litestar:
             "user_repository": Provide(provide_user_repository),
             "product_repository": Provide(provide_product_repository),
             "order_repository": Provide(provide_order_repository),
+            "report_repository": Provide(provide_report_repository),
             "user_service": Provide(provide_user_service),
             "product_service": Provide(provide_product_service),
             "order_service": Provide(provide_order_service),
+            "report_service": Provide(provide_report_service),
         },
         on_startup=[init_db],
     )

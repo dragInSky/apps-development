@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import date, datetime
 from typing import List, Optional
 
 from pydantic import BaseModel, EmailStr, Field
@@ -99,3 +99,17 @@ class OrderResponse(BaseModel):
     items: List[OrderItemResponse]
 
     model_config = {"from_attributes": True}
+
+
+class ReportRequest(BaseModel):
+    report_at: date
+
+    model_config = {"extra": "forbid"}
+
+
+class ReportRow(BaseModel):
+    report_at: date
+    order_id: int
+    count_product: int
+
+    model_config = {"extra": "forbid"}

@@ -80,6 +80,41 @@ services:
       - db
     command: ["python", "-m", "LR6.worker"]
 
+  taskiq_worker:
+    build:
+      context: ..
+      dockerfile: LR8/Dockerfile
+    container_name: lr8_taskiq_worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/my_postgres_db
+      DB_HOST: db
+      DB_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+    depends_on:
+      - rabbitmq
+      - db
+    command: ["taskiq", "worker", "LR8.scheduler:broker"]
+
+  taskiq_scheduler:
+    build:
+      context: ..
+      dockerfile: LR8/Dockerfile
+    container_name: lr8_taskiq_scheduler
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/my_postgres_db
+      DB_HOST: db
+      DB_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+    depends_on:
+      - rabbitmq
+      - db
+    command:
+      ["taskiq", "scheduler", "LR8.scheduler:scheduler", "--skip-first-run"]
+
 volumes:
   postgres_data:
   rabbitmq_data:

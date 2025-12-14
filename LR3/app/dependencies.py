@@ -1,6 +1,7 @@
 import os
 from typing import Any, Optional
 
+from sqlalchemy import text
 from sqlalchemy.ext.asyncio import AsyncSession, create_async_engine
 from sqlalchemy.orm import sessionmaker
 
@@ -8,9 +9,11 @@ from LR3.app.cache import RedisCache
 from LR3.app.models import Base
 from LR3.repositories.order_repository import OrderRepository
 from LR3.repositories.product_repository import ProductRepository
+from LR3.repositories.report_repository import ReportRepository
 from LR3.repositories.user_repository import UserRepository
 from LR3.services.order_service import OrderService
 from LR3.services.product_service import ProductService
+from LR3.services.report_service import ReportService
 from LR3.services.user_service import UserService
 
 DATABASE_URL = os.getenv(
@@ -34,6 +37,18 @@ async_session_factory = sessionmaker(
     engine, class_=AsyncSession, expire_on_commit=False
 )
 
+ORDER_REPORT_VIEW_NAME = "order_report"
+ORDER_REPORT_VIEW_SQL = f"""
+CREATE VIEW {ORDER_REPORT_VIEW_NAME} AS
+SELECT
+    DATE(o.created_at) AS report_at,
+    o.id AS order_id,
+    COALESCE(SUM(oi.quantity), 0) AS count_product
+FROM orders AS o
+LEFT JOIN order_items AS oi ON oi.order_id = o.id
+GROUP BY DATE(o.created_at), o.id;
+""".strip()
+
 
 def configure_engine(new_url: Optional[str] = None) -> None:
     """Recreate engine and session factory (useful for tests)."""
@@ -52,6 +67,8 @@ async def provide_db_session() -> AsyncSession:
 async def init_db() -> None:
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
+        await conn.execute(text(f"DROP VIEW IF EXISTS {ORDER_REPORT_VIEW_NAME};"))
+        await conn.execute(text(ORDER_REPORT_VIEW_SQL))
 
 
 async def provide_user_repository(db_session: AsyncSession) -> UserRepository:
@@ -64,6 +81,10 @@ async def provide_product_repository(db_session: AsyncSession) -> ProductReposit
 
 async def provide_order_repository(db_session: AsyncSession) -> OrderRepository:
     return OrderRepository(db_session)
+
+
+async def provide_report_repository(db_session: AsyncSession) -> ReportRepository:
+    return ReportRepository(db_session)
 
 
 async def provide_user_service(user_repository: UserRepository) -> UserService:
@@ -82,6 +103,12 @@ async def provide_order_service(
     user_repository: UserRepository,
 ) -> OrderService:
     return OrderService(order_repository, product_repository, user_repository)
+
+
+async def provide_report_service(
+    report_repository: ReportRepository,
+) -> ReportService:
+    return ReportService(report_repository)
 
 
 def get_redis_client() -> Any:
