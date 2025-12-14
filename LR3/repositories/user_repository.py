@@ -1,6 +1,7 @@
 from typing import List, Optional
 
 from sqlalchemy import select
+from sqlalchemy.exc import IntegrityError
 
 from LR3.app.models import User
 
@@ -23,6 +24,11 @@ class UserRepository:
         result = await self.session.execute(stmt)
         return result.scalar_one_or_none()
 
+    async def get_by_username(self, username: str) -> Optional[User]:
+        stmt = select(User).where(User.username == username)
+        result = await self.session.execute(stmt)
+        return result.scalar_one_or_none()
+
     async def get_all(self, limit: int = 100, offset: int = 0) -> List[User]:
         stmt = select(User).limit(limit).offset(offset)
         result = await self.session.execute(stmt)
@@ -32,7 +38,11 @@ class UserRepository:
         payload = _to_dict(user_data)
         user = User(**payload)
         self.session.add(user)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            raise ValueError("User with this email or username already exists") from exc
         await self.session.refresh(user)
         return user
 
@@ -43,7 +53,11 @@ class UserRepository:
         for key, value in _to_dict(user_data).items():
             if value is not None:
                 setattr(user, key, value)
-        await self.session.commit()
+        try:
+            await self.session.commit()
+        except IntegrityError as exc:
+            await self.session.rollback()
+            raise ValueError("User with this email or username already exists") from exc
         await self.session.refresh(user)
         return user
 

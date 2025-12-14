@@ -1,9 +1,9 @@
 from typing import List
 
 from litestar import Controller, delete, get, post, put
-from litestar.exceptions import NotFoundException
+from litestar.exceptions import HTTPException, NotFoundException
 from litestar.params import Parameter
-from litestar.status_codes import HTTP_201_CREATED
+from litestar.status_codes import HTTP_201_CREATED, HTTP_409_CONFLICT
 
 from LR3.app.cache import USER_CACHE_TTL_SECONDS, RedisCache
 from LR3.app.schemas import UserCreate, UserResponse, UserUpdate
@@ -41,7 +41,10 @@ class UserController(Controller):
     async def create_user(
         self, user_service: UserService, data: UserCreate
     ) -> UserResponse:
-        user = await user_service.create(data)
+        try:
+            user = await user_service.create(data)
+        except ValueError as exc:
+            raise HTTPException(status_code=HTTP_409_CONFLICT, detail=str(exc)) from exc
         return UserResponse.model_validate(user)
 
     @put("/{user_id:int}")
@@ -52,7 +55,10 @@ class UserController(Controller):
         data: UserUpdate,
         user_id: int = Parameter(gt=0),
     ) -> UserResponse:
-        user = await user_service.update(user_id, data)
+        try:
+            user = await user_service.update(user_id, data)
+        except ValueError as exc:
+            raise HTTPException(status_code=HTTP_409_CONFLICT, detail=str(exc)) from exc
         if not user:
             raise NotFoundException(detail=f"User with ID {user_id} not found")
         await cache.delete(f"user:{user_id}")
