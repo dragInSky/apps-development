@@ -1,83 +1,61 @@
-# LR3 - REST API с Dependency Injection
+# LR3 — REST API с DI
 
-Простое API для работы с пользователями. Используется Litestar, SQLAlchemy и PostgreSQL.
+Минимальное API на Litestar, SQLAlchemy и PostgreSQL для CRUD над пользователями.
 
-## Установка
+## Подготовка
 
 ```bash
 cd LR3
-python -m venv venv
-source venv/bin/activate  # на Windows: venv\Scripts\activate
+python3 -m venv venv
+source venv/bin/activate
 pip install -r requirements.txt
+cd ..
 ```
 
 ## База данных
 
-Нужен PostgreSQL. По умолчанию подключается к `postgres:postgres@localhost/my_postgres_db`.
+Запусти PostgreSQL в Docker (рекомендуется):
 
-Если базы нет, создай:
 ```bash
-createdb -U postgres my_postgres_db
+docker-compose up -d
 ```
 
-Таблицы создаются автоматически при первом запуске.
+Параметры подключения: `postgres/postgres@localhost:5432/my_postgres_db`.
 
-## Запуск
-
-**Важно:** запускай из папки `apps-development`, не из `LR3`!
+Для локального PostgreSQL:
 
 ```bash
-cd /path/to/apps-development
-source LR3/venv/bin/activate
-uvicorn LR3.app.main:app --reload --port 8000
+PGPASSWORD=postgres createdb -h localhost -U postgres my_postgres_db
+export DATABASE_URL=postgresql+asyncpg://postgres:postgres@localhost/my_postgres_db
 ```
 
-Или без активации venv:
+## Запуск приложения
+
 ```bash
-cd /path/to/apps-development
-LR3/venv/bin/python -m uvicorn LR3.app.main:app --reload --port 8000
+cd LR3
+export PYTHONPATH=$(pwd)/..
+../LR3/venv/bin/uvicorn --app-dir .. LR3.app.main:app --reload --port 8000
 ```
 
-Сервер будет на `http://127.0.0.1:8000`
+## Примеры запросов
 
-## API
-
-Создать пользователя:
 ```bash
-curl -X POST "http://127.0.0.1:8000/users" \
-  -H "Content-Type: application/json" \
-  -d '{"email":"user@example.com","full_name":"John Doe"}'
-```
+BASE=http://127.0.0.1:8000
+EMAIL="user$(date +%s)@example.com"
 
-Получить всех:
-```bash
-curl http://127.0.0.1:8000/users
-```
+ID=$(
+  curl -s -X POST "$BASE/users" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\":\"$EMAIL\",\"full_name\":\"John Doe\"}" \
+  | python3 -c "import sys, json; print(json.load(sys.stdin)['id'])"
+)
 
-Получить по ID:
-```bash
-curl http://127.0.0.1:8000/users/1
-```
+curl "$BASE/users"
+curl "$BASE/users/$ID"
 
-Обновить:
-```bash
-curl -X PUT "http://127.0.0.1:8000/users/1" \
+curl -X PUT "$BASE/users/$ID" \
   -H "Content-Type: application/json" \
   -d '{"full_name":"Jane Doe"}'
+
+curl -X DELETE "$BASE/users/$ID"
 ```
-
-Удалить:
-```bash
-curl -X DELETE http://127.0.0.1:8000/users/1
-```
-
-## Проблемы
-
-**"ModuleNotFoundError: No module named 'LR3'"** - запускай из `apps-development`, не из `LR3`
-
-**"Address already in use"** - порт занят, используй другой:
-```bash
-uvicorn LR3.app.main:app --reload --port 8001
-```
-
-**Не подключается к БД** - проверь что PostgreSQL запущен и база существует

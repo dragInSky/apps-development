@@ -1,0 +1,121 @@
+version: '3.8'
+
+services:
+  rabbitmq:
+    image: rabbitmq:3-management
+    container_name: lr6_rabbitmq
+    ports:
+      - "5672:5672"
+      - "15672:15672"
+    environment:
+      - RABBITMQ_DEFAULT_VHOST=local
+    volumes:
+      - rabbitmq_data:/data
+
+  redis:
+    image: redis:latest
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis-data:/data
+
+  db:
+    image: postgres:16-alpine
+    container_name: lr5_postgres
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: my_postgres_db
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  web:
+    build:
+      context: ..
+      dockerfile: LR5/Dockerfile
+    container_name: lr5_app
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/my_postgres_db
+      DB_HOST: db
+      DB_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      HOST: 0.0.0.0
+      PORT: 8000
+    depends_on:
+      - rabbitmq
+      - redis
+      - db
+    ports:
+      - "8000:8000"
+
+  worker:
+    build:
+      context: ..
+      dockerfile: LR5/Dockerfile
+    container_name: lr6_worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/my_postgres_db
+      DB_HOST: db
+      DB_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+    depends_on:
+      - rabbitmq
+      - redis
+      - db
+    command: ["python", "-m", "LR6.worker"]
+
+  taskiq_worker:
+    build:
+      context: ..
+      dockerfile: LR8/Dockerfile
+    container_name: lr8_taskiq_worker
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/my_postgres_db
+      DB_HOST: db
+      DB_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+    depends_on:
+      - rabbitmq
+      - db
+    command: ["taskiq", "worker", "LR8.scheduler:broker"]
+
+  taskiq_scheduler:
+    build:
+      context: ..
+      dockerfile: LR8/Dockerfile
+    container_name: lr8_taskiq_scheduler
+    environment:
+      DATABASE_URL: postgresql+asyncpg://postgres:postgres@db/my_postgres_db
+      DB_HOST: db
+      DB_PORT: 5432
+      RABBITMQ_HOST: rabbitmq
+      RABBITMQ_PORT: 5672
+      RABBITMQ_URL: amqp://guest:guest@rabbitmq:5672/local
+    depends_on:
+      - rabbitmq
+      - db
+    command:
+      ["taskiq", "scheduler", "LR8.scheduler:scheduler", "--skip-first-run"]
+
+volumes:
+  postgres_data:
+  rabbitmq_data:
+  redis-data:

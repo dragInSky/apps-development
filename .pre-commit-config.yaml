@@ -1,0 +1,19 @@
+fail_fast: false
+repos:
+  - repo: local
+    hooks:
+      - id: black
+        name: Black
+        entry: black --config pyproject.toml LR3 LR4/tests LR5
+        pass_filenames: false
+        language: system
+      - id: isort
+        name: isort
+        entry: isort --settings-path pyproject.toml LR3 LR4/tests LR5
+        pass_filenames: false
+        language: system
+      - id: pylint
+        name: pylint
+        entry: pylint --rcfile .pylintrc LR3
+        pass_filenames: false
+        language: system
